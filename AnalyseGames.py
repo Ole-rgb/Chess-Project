@@ -5,7 +5,6 @@ from chess.engine import Cp, Mate, MateGiven
 from collections import Counter
 from typing import Optional
 from io import StringIO
-from stockfish import Stockfish
 
 class HelperClass:
     # returns all openings corresponding to the given list of files
@@ -15,7 +14,6 @@ class HelperClass:
 
     def getGame(self, username:str, file:str):
         return json.load(open("./games/{}/{}".format(username,file)))
-    
     
     #returns a list of files where the username has the given color (if the color is not specified the function returns all user games)
     def getFiles(self, username:str,white:Optional[bool]=None):
@@ -39,18 +37,40 @@ class ChessAnalyser:
         self.board = chess.Board()
         self.engine = chess.engine.SimpleEngine.popen_uci("./Stockfish/src/stockfish")
         
-    def playTheGame(self,game):
+    def readPGN(self,game):
         pgn = StringIO(game["moves"])
         game = chess.pgn.read_game(pgn)
-        print(game)
 
     def getEval(self, time:Optional[int]=0.1):
         info = self.engine.analyse(self.board, chess.engine.Limit(time=time))
         return info["score"]
-
-    def setPoition(self):
+    
+    def GetEvalPlot(self,time:Optional[int]=2):
         pass
     
+
+    
+    def getBoard(self):
+        return self.board
+    
+    def getEngine(self):
+        return self.engine
+    
+    def playNewGame(self):
+        self.board = chess.Board()
+        
+        i = 0
+        while not self.board.is_game_over():
+            print(self.board)
+            if i % 2 == 0:
+                print(self.getEval(1))
+            result = self.engine.play(self.board,chess.engine.Limit(time=1))
+            self.board.push(result.move)
+            i += 1
+            
+        self.board
+        
+        
     def quitEngine(self):
         self.engine.quit()
 
@@ -63,10 +83,12 @@ if __name__ == "__main__":
     
     analyser = ChessAnalyser()
     #updates the position on the board to the end position
-    analyser.playTheGame(game=game)
+    analyser.readPGN(game)
     
     #evaluates the end position
     print(analyser.getEval(2))
+    
+    analyser.playNewGame()
     
     #quits the engine
     analyser.quitEngine()
